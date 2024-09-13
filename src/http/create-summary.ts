@@ -1,11 +1,11 @@
+import { db } from "@/db"
+import { commentsSummary, summaryCommentIds } from "@/db/schema"
+import { env } from "@/env"
+import { FastifyReply, FastifyRequest } from "fastify"
 import { google } from "googleapis"
 import OpenAI from "openai"
 
-import { db } from "../src/db/index"
-import { commentsSummary, summaryCommentIds } from "../src/db/schema"
-import { env } from "../src/env.js"
-
-interface Comment {
+type Comment = {
   commentId: string
   comment: string
 }
@@ -40,14 +40,14 @@ async function fetchComments(videoId: string): Promise<Comment[]> {
   }
 }
 
-export default async function handler(req, res) {
-  const videoId = "LSo7xH7YgaY"
+export async function createSummary(req: FastifyRequest, res: FastifyReply) {
+  const videoId = req.query.videoId as string
 
   const comments = await fetchComments(videoId)
   const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY })
 
-  try {
-    const completion = await openai.chat.completions.create({
+  const completion = await openai.chat.completions
+    .create({
       model: "gpt-4o-mini-2024-07-18",
       messages: [
         {
@@ -59,7 +59,12 @@ export default async function handler(req, res) {
         },
       ],
     })
+    .catch((error) => {
+      console.error("Error with OpenAI API:", error)
+      res.status(400).send({ message: "Failed to create summary" })
+    })
 
+  try {
     const [commentSummary] = await db
       .insert(commentsSummary)
       .values({
@@ -78,10 +83,10 @@ export default async function handler(req, res) {
         })
       }),
     )
-
-    res.status(200).json({ message: "Hello world!" })
   } catch (error) {
-    console.error("Error with OpenAI API:", error)
-    res.status(400).json({ message: "Failed to create summary" })
+    console.error("Error inserting data on the DB:", error)
+    res.status(400).send({ message: "Failed to create summary" })
   }
+
+  res.status(200).send({ message: "Summary created successfully!" })
 }
