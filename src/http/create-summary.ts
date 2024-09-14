@@ -41,6 +41,14 @@ async function fetchComments(videoId: string): Promise<Comment[]> {
 }
 
 export async function createSummary(req: FastifyRequest, res: FastifyReply) {
+  if (!req.cookies.supabase_jwt) {
+    return res.status(401).send({ message: "Unauthorized" })
+  }
+
+  if (req.cookies.supabase_jwt !== "supabase_auth_cookie") {
+    return res.status(401).send({ message: "Unauthorized" })
+  }
+
   const videoId = req.query.videoId as string
 
   const comments = await fetchComments(videoId)

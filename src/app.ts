@@ -1,9 +1,12 @@
 import { env } from "@/env"
 import { createSummary } from "@/http/create-summary"
+import fastifyCookie from "@fastify/cookie"
 import fastify from "fastify"
 import { ZodError } from "zod"
 
 export const app = fastify()
+
+app.register(fastifyCookie)
 
 app.get("/create-summary", createSummary)
 
