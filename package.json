@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "pnpm tsup src --out-dir build && pnpm db:generate && pnpm db:migrate",
+    "build": "pnpm install && pnpm tsup src --out-dir build && pnpm db:generate && pnpm db:migrate",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
