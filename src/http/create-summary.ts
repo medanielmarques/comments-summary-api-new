@@ -42,18 +42,20 @@ async function fetchComments(videoId: string): Promise<Comment[]> {
 }
 
 export async function createSummary(req: FastifyRequest, res: FastifyReply) {
-  const rawToken = req.cookies["sb-alykkrmvqnduxbjaptra-auth-token"]
-  if (!rawToken) return res.status(401).send({ message: "Unauthorized" })
+  // const rawToken = req.cookies["sb-alykkrmvqnduxbjaptra-auth-token"]
+  // if (!rawToken) return res.status(401).send({ message: "Unauthorized" })
 
-  const token = parseToken(rawToken)
+  // const token = parseToken(rawToken)
 
-  const { data, error } = await supabase.auth.getUser(token)
-  if (error) return res.status(401).send("Invalid token")
+  // const { data, error } = await supabase.auth.getUser(token)
+  // if (error) return res.status(401).send("Invalid token")
 
   const videoId = req.query.videoId as string
 
   const comments = await fetchComments(videoId)
   const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY })
+
+  const enumeratedComments = enumerateComments(comments.map((c) => c.comment))
 
   const completion = await openai.chat.completions
     .create({
@@ -62,9 +64,7 @@ export async function createSummary(req: FastifyRequest, res: FastifyReply) {
         {
           role: "user",
           content: `
-          Summarize the 4 main topics on this comments, keep in mind that content creators will be the ones reading this, so adapt the text accordingly and make it as useful as possible for them. ${enumerateComments(
-            comments.map((c) => c.comment),
-          )}`,
+          Summarize the 4 main topics on this comments, keep in mind that content creators will be the ones reading this, so adapt the text accordingly and make it as useful as possible for them. ${enumeratedComments}`,
         },
       ],
     })
@@ -74,23 +74,23 @@ export async function createSummary(req: FastifyRequest, res: FastifyReply) {
     })
 
   try {
+    const commentsIds = comments.map((c) => c.commentId).join()
+
     const [commentSummary] = await db
       .insert(commentsSummary)
       .values({
         summary: completion.choices[0]?.message?.content || "",
         videoId,
-        userId: data.user.id,
+        // userId: data.user.id,
+        userId: "data.user.id",
       })
       .returning({ id: commentsSummary.id })
 
-    await Promise.all(
-      comments.map(async (comment) => {
-        await db.insert(summaryCommentIds).values({
-          comment_id: comment.commentId,
-          comment_summary_id: commentSummary?.id,
-        })
-      }),
-    )
+    await db.insert(summaryCommentIds).values({
+      commentsIds,
+      totalCommentsUsed: comments.length,
+      commentsSummaryId: commentSummary?.id,
+    })
   } catch (error) {
     console.error("Error inserting data on the DB:", error)
     res.status(400).send({ message: "Failed to create summary" })

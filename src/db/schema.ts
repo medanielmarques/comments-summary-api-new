@@ -21,10 +21,11 @@ export const commentsSummary = sqliteTable(
 
 export const summaryCommentIds = sqliteTable("summary_comment_ids", {
   id: text("id", { mode: "text" }).primaryKey().$default(cuid),
-  comment_id: text("comment_id", { length: 24 }).unique().notNull(),
-  comment_summary_id: text("comment_summary_id", { length: 30 })
+  commentsIds: text("comments_ids").notNull(),
+  commentsSummaryId: text("comments_summary_id", { length: 30 })
     .notNull()
     .references(() => commentsSummary.id),
+  totalCommentsUsed: int("total_comments_used").notNull(),
   createdAt: int("created_at", { mode: "timestamp" })
     .default(sql`(unixepoch())`)
     .notNull(),

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c675ea41-c52c-40e0-bfcb-46d061f65305",
+  "id": "84a7290d-cfc0-4243-895e-1b0da6cb65a1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "comments_summary": {
@@ -74,16 +74,23 @@
           "notNull": true,
           "autoincrement": false
         },
-        "comment_id": {
-          "name": "comment_id",
-          "type": "text(24)",
+        "comments_ids": {
+          "name": "comments_ids",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "comment_summary_id": {
-          "name": "comment_summary_id",
+        "comments_summary_id": {
+          "name": "comments_summary_id",
           "type": "text(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_comments_used": {
+          "name": "total_comments_used",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -104,22 +111,14 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "summary_comment_ids_comment_id_unique": {
-          "name": "summary_comment_ids_comment_id_unique",
-          "columns": [
-            "comment_id"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
-        "summary_comment_ids_comment_summary_id_comments_summary_id_fk": {
-          "name": "summary_comment_ids_comment_summary_id_comments_summary_id_fk",
+        "summary_comment_ids_comments_summary_id_comments_summary_id_fk": {
+          "name": "summary_comment_ids_comments_summary_id_comments_summary_id_fk",
           "tableFrom": "summary_comment_ids",
           "tableTo": "comments_summary",
           "columnsFrom": [
-            "comment_summary_id"
+            "comments_summary_id"
           ],
           "columnsTo": [
             "id"
