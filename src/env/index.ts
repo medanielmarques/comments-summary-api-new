@@ -10,6 +10,9 @@ const envSchema = z.object({
 
   YOUTUBE_DATA_API_KEY: z.string(),
   OPENAI_API_KEY: z.string(),
+
+  SUPABASE_URL: z.string(),
+  SUPABASE_ANON_KEY: z.string(),
 })
 
 const _env = envSchema.safeParse(process.env)

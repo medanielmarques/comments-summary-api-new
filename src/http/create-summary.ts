@@ -1,6 +1,7 @@
 import { db } from "@/db"
 import { commentsSummary, summaryCommentIds } from "@/db/schema"
 import { env } from "@/env"
+import { parseToken, supabase } from "@/lib/supabase"
 import { FastifyReply, FastifyRequest } from "fastify"
 import { google } from "googleapis"
 import OpenAI from "openai"
@@ -41,13 +42,13 @@ async function fetchComments(videoId: string): Promise<Comment[]> {
 }
 
 export async function createSummary(req: FastifyRequest, res: FastifyReply) {
-  if (!req.cookies.supabase_jwt) {
-    return res.status(401).send({ message: "Unauthorized" })
-  }
+  const rawToken = req.cookies["sb-alykkrmvqnduxbjaptra-auth-token"]
+  if (!rawToken) return res.status(401).send({ message: "Unauthorized" })
 
-  if (req.cookies.supabase_jwt !== "supabase_auth_cookie") {
-    return res.status(401).send({ message: "Unauthorized" })
-  }
+  const token = parseToken(rawToken)
+
+  const { data, error } = await supabase.auth.getUser(token)
+  if (error) return res.status(401).send("Invalid token")
 
   const videoId = req.query.videoId as string
 
@@ -78,8 +79,7 @@ export async function createSummary(req: FastifyRequest, res: FastifyReply) {
       .values({
         summary: completion.choices[0]?.message?.content || "",
         videoId,
-        userId: "ctx.user!.id",
-        // userId: ctx.user!.id,
+        userId: data.user.id,
       })
       .returning({ id: commentsSummary.id })
 
